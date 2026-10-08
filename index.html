@@ -71,7 +71,7 @@ model-viewer{width:100%; height:300px; display:block; --poster-color:transparent
 .arbtn{position:absolute; right:10px; bottom:10px; background:var(--accent); color:var(--accent-ink); border:0; border-radius:10px; padding:10px 14px; font-weight:700; font-size:14px; box-shadow:0 3px 0 var(--obj-shadow)}
 .handbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
 .handbar .hint{flex:1 1 220px; min-width:0}
-.cam{position:absolute; left:10px; top:10px; width:168px; aspect-ratio:4/3; max-width:45%; border-radius:10px; overflow:hidden; border:2px solid var(--accent); background:#000}
+.cam{position:relative; flex:none; width:160px; aspect-ratio:4/3; max-width:100%; border-radius:10px; overflow:hidden; border:2px solid var(--accent); background:#000}
 .cam video,.cam canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1)}
 .cam .lbl{position:absolute; left:0; right:0; bottom:0; font-size:11px; font-weight:700; text-align:center; padding:2px; background:rgba(0,0,0,.55); color:#fff}
 .cam.grab{border-color:var(--good)}
@@ -131,6 +131,21 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
 .pop{animation:pop .45s ease}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
 .teach{font-size:14px; color:var(--muted)}
+.mzone{display:flex; justify-content:center; padding-block:6px}
+.mcard{background:var(--ruler); color:var(--ruler-ink); font-family:var(--f-display); font-size:clamp(24px,4vw,30px); font-weight:800; padding:12px 24px; border-radius:12px; box-shadow:inset 0 -4px 0 var(--ruler-edge),0 6px 14px var(--obj-shadow); cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; position:relative; z-index:5; font-variant-numeric:tabular-nums}
+.mcard.sel{outline:3px solid var(--accent); outline-offset:3px}
+.mcard.drag{pointer-events:none; cursor:grabbing; z-index:50; box-shadow:inset 0 -4px 0 var(--ruler-edge),0 14px 28px var(--obj-shadow)}
+.mcard.back{transition:transform .3s ease}
+.mcard.gone{visibility:hidden}
+.mopts{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.mopt{min-height:76px; border:2px dashed var(--line); border-radius:12px; background:var(--paper); color:var(--ink); font-family:var(--f-display); font-size:clamp(22px,3.4vw,28px); font-weight:800; font-variant-numeric:tabular-nums; transition:background .15s, border-color .15s}
+.mopt.over{border-style:solid; border-color:var(--accent); background:var(--grid); transform:scale(1.03)}
+.mopt.ok{border:2px solid var(--good); background:var(--good-bg); color:var(--good)}
+.mopt.no{border:2px solid var(--bad); background:var(--bad-bg); color:var(--bad)}
+.mopt:disabled{cursor:default}
+.mopt small{display:block; font-family:var(--f-body); font-size:12px; font-weight:500}
+#handCursor{position:fixed; left:0; top:0; width:30px; height:30px; border-radius:50%; border:3px solid var(--accent); background:transparent; pointer-events:none; z-index:200; box-shadow:0 0 0 3px rgba(255,255,255,.7)}
+#handCursor.grab{background:var(--good); border-color:var(--good)}
 .teach ol{margin:6px 0 0; padding-left:20px; display:grid; gap:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 </style>
@@ -140,7 +155,7 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
     <div>
       <div class="eyebrow">Matematik Tahun 5 · Ukuran dan Sukatan · SP 5.1.1</div>
       <h1>Misi <span class="u">Pembaris</span> AR</h1>
-      <div class="sp">Tukarkan sukatan mm kepada cm dan cm kepada mm.</div>
+      <div class="sp">Tukarkan sukatan mm kepada cm dan cm kepada mm. <span style="opacity:.6">· Versi 2 (padanan)</span></div>
     </div>
     <div class="hud" aria-live="polite">
       <div class="chip"><span>Tahap</span><b id="hudLvl">1</b><div class="xpbar" aria-hidden="true"><i id="hudBar"></i></div></div>
@@ -161,10 +176,10 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
           camera-orbit="0deg 38deg 62%" min-camera-orbit="auto auto 30%" interaction-prompt="none">
           <button slot="ar-button" class="arbtn" id="arBtn">Letak di meja (AR)</button>
         </model-viewer>
-        <div class="cam" id="camBox" hidden><video id="cam" playsinline muted></video><canvas id="camCv" width="320" height="240"></canvas><div class="lbl" id="camLbl">Tunjuk tangan</div></div>
         <div class="fallback" id="mvFallback" hidden>Model 3D tidak dapat dimuatkan di sini. Pembaris 2D di bawah masih boleh digunakan.</div>
       </div>
       <div class="handbar">
+        <div class="cam" id="camBox" hidden><video id="cam" playsinline muted></video><canvas id="camCv" width="320" height="240"></canvas><div class="lbl" id="camLbl">Tunjuk tangan</div></div>
         <button class="btn ghost" type="button" id="handBtn">Hidupkan Kawalan Tangan</button>
         <span class="hint" id="handStatus">Guna kamera: cubit (rapatkan ibu jari dan jari telunjuk), kemudian gerakkan tangan untuk memusing pembaris.</span>
       </div>
@@ -197,7 +212,7 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
       <li>Set induksi: murid letak pembaris AR di atas meja dan bandingkan dengan pembaris sebenar mereka. Kedua-duanya sama panjang.</li>
       <li>Kawalan tangan: tekan "Hidupkan Kawalan Tangan", benarkan kamera, kemudian cubit dan gerakkan tangan di hadapan kamera untuk memusing pembaris. Buka jari untuk lepas.</li>
       <li>Penerokaan: tukar objek, kira bilangan tanda kecil (mm) dalam 1 cm, dan bincangkan mengapa kita darab atau bahagi 10.</li>
-      <li>Pengukuhan: setiap murid main satu pusingan Misi Penukar (20 soalan, makin sukar). Kumpul bintang dan XP.</li>
+      <li>Pengukuhan: setiap murid main satu pusingan Misi Penukar (20 soalan, makin sukar). Soalan 1 hingga 10 ditaip; soalan 11 hingga 20 ialah padanan: seret kad, atau cubit dan tarik dengan Kawalan Tangan. Kumpul bintang dan XP.</li>
     </ol>
   </section>
 </div>
@@ -399,9 +414,22 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
       work=`${b} mm ÷ 10 = 0.${b} cm; ${a} cm + 0.${b} cm = ${fmt(len/10)} cm`; }
     return {T,len,name,color,q,sub,ans,unit,work,tag,show};
   }
+  const r2=v=>Math.round(v*100)/100, f2=v=>String(r2(v));
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+  function makeOpts(Q){
+    const a=Q.ans, A=Math.floor(Q.len/10), B=Q.len%10;
+    let c=[a, a*10, a/10];
+    if(Q.T==='campur') c.push(A+B, A*100+B);
+    else if(Q.T==='campur-cm') c.push(A+B, r2(A+B/100));
+    else c.push(Q.unit==='mm' ? a+10 : a+1, a/100);
+    const out=[];
+    c.map(r2).forEach(v=>{ if(v>0 && out.length<4 && !out.includes(v)) out.push(v); });
+    let k=2; while(out.length<4){ const v=r2(a+k*(Q.unit==='mm'?1:0.1)); if(!out.includes(v)) out.push(v); k++; }
+    return shuffle(out);
+  }
 
   /* URL Web App Google Apps Script (berakhir dengan /exec). Biarkan kosong jika tidak merekod ke Google Sheets. */
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbx4Zwl_fu5YlXAOFT_xtfWAilgknw3LPePnyncqkUUZAKcvpVmoH-7KFXqoW9oEm5jB/exec';
+  const GAS_URL = '';
 
   const N=20, quiz=document.getElementById('quiz'), pips=document.getElementById('pips');
   let round=[], qi=0, results=[], roundXp=0, answered=false, hintUsed=false, t0=0;
@@ -422,7 +450,7 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
     };
   }
   function start(){
-    round=[]; for(let i=0;i<N;i++) round.push(gen(i<6?0:i<14?1:2));
+    round=[]; for(let i=0;i<N;i++) { const Q=gen(i<6?0:i<14?1:2); Q.match = i>=10; if(Q.match) Q.opts=makeOpts(Q); round.push(Q); }
     qi=0; results=[]; roundXp=0; streak=0; t0=Date.now(); hud(); render();
   }
   function hantar(c,s){
@@ -455,6 +483,7 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
     drawPips();
     if(qi>=N) return finish();
     const Q=round[qi]; answered=false; hintUsed=false;
+    if(Q.match) return renderMatch(Q);
     quiz.innerHTML=`
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="tag">Soalan ${qi+1} / ${N} · ${Q.tag}</div>
@@ -482,19 +511,95 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
     const raw=inp.value.trim().replace(',','.');
     if(raw===''||isNaN(Number(raw))){ inp.placeholder='Isi nombor'; inp.focus(); return; }
     const ok=Math.abs(Number(raw)-Q.ans)<1e-6;
-    answered=true; results[qi]=ok; inp.readOnly=true;
+    inp.readOnly=true;
+    score(Q,ok);
+    const b=document.getElementById('ansBtn'); b.textContent= qi===N-1?'Lihat keputusan':'Seterusnya'; b.focus();
+    drawPips();
+  }
+  function score(Q,ok){
+    answered=true; results[qi]=ok;
     let gain=0;
     if(ok){ streak++; gain=(hintUsed?5:10)+(streak>=3?5:0); xp+=gain; roundXp+=gain; } else streak=0;
     store.set('mpar-xp',xp); hud(ok);
     revealRuler(document.getElementById('qRuler'));
-    const fb=document.getElementById('fb');
-    fb.innerHTML = ok
+    document.getElementById('fb').innerHTML = ok
       ? `<div class="fb good pop"><span class="t">Tepat! +${gain} XP${streak>=3?' · Kombo ×'+streak:''}</span><span class="w">${esc(Q.work)}</span></div>`
-      : `<div class="fb bad"><span class="t">Belum tepat. Jawapan: ${fmt(Q.ans)} ${Q.unit}</span><span class="w">${esc(Q.work)}</span></div>`;
-    const b=document.getElementById('ansBtn'); b.textContent= qi===N-1?'Lihat keputusan':'Seterusnya'; b.focus();
+      : `<div class="fb bad"><span class="t">Belum tepat. Jawapan: ${f2(Q.ans)} ${Q.unit}</span><span class="w">${esc(Q.work)}</span></div>`;
     drawPips();
   }
   function next(){ qi++; render(); }
+
+  /* ---------- Soalan padanan (seret / cubit) ---------- */
+  const drag={on:false, el:null, sx:0, sy:0, moved:false};
+  function renderMatch(Q){
+    quiz.innerHTML=`
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="tag">Soalan ${qi+1} / ${N} · Padanan · ${Q.tag}</div>
+        <div class="question"><small>${esc(Q.T==='baca-cm'?'Baca pembaris, kemudian padankan jawapan dalam cm.':Q.sub)}</small>Tarik kad ke jawapan yang betul</div>
+        <div class="rulerbox"><svg id="qRuler" role="img" aria-label="Pembaris soalan"></svg></div>
+        <div class="mzone" id="mZone"><div class="mcard" id="mCard" tabindex="0" role="button" aria-label="Kad soalan ${esc(Q.q)}">${esc(Q.q)}</div></div>
+        <div class="mopts" id="mOpts">${Q.opts.map((v,i)=>`<button type="button" class="mopt" data-i="${i}">${f2(v)} ${Q.unit}</button>`).join('')}</div>
+        <div class="hint" id="mTip">Seret kad kuning ke petak jawapan. Dengan Kawalan Tangan: cubit kad, tarik, dan buka jari di atas jawapan.</div>
+        <div id="fb" aria-live="polite"></div>
+        <div id="mNext"></div>
+      </div>`;
+    rulerSVG(document.getElementById('qRuler'),Q.len,Q.color,Q.name,!Q.show);
+    const card=document.getElementById('mCard');
+    card.addEventListener('pointerdown',e=>{ if(dDown(e.clientX,e.clientY)){ e.preventDefault(); } });
+    card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); card.classList.toggle('sel'); } });
+    document.querySelectorAll('.mopt').forEach(b=>b.addEventListener('click',()=>{
+      if(!answered && card.classList.contains('sel')) matchDrop(+b.dataset.i);
+    }));
+  }
+  function tileAt(x,y){ const h=document.elementFromPoint(x,y); return h && h.closest ? h.closest('.mopt') : null; }
+  function hl(t){ document.querySelectorAll('.mopt').forEach(b=>b.classList.toggle('over', b===t)); }
+  function dDown(x,y){
+    const Q=round[qi]; if(!Q||!Q.match||answered) return false;
+    const card=document.getElementById('mCard'); if(!card) return false;
+    const h=document.elementFromPoint(x,y); if(!h||!card.contains(h)) return false;
+    Object.assign(drag,{on:true, el:card, sx:x, sy:y, moved:false});
+    card.classList.remove('back'); card.classList.add('drag');
+    return true;
+  }
+  function dMove(x,y){
+    if(!drag.on) return;
+    if(Math.hypot(x-drag.sx,y-drag.sy)>6) drag.moved=true;
+    drag.el.style.transform=`translate(${x-drag.sx}px,${y-drag.sy}px)`;
+    hl(tileAt(x,y));
+  }
+  function dUp(x,y){
+    if(!drag.on) return;
+    drag.on=false; const card=drag.el;
+    const t=tileAt(x,y); hl(null); card.classList.remove('drag');
+    if(t){ card.classList.add('gone'); matchDrop(+t.dataset.i); return; }
+    card.classList.add('back'); card.style.transform='';
+    if(!drag.moved) card.classList.toggle('sel');
+  }
+  window.addEventListener('pointermove',e=>{ if(drag.on && !drag.hand) dMove(e.clientX,e.clientY); });
+  window.addEventListener('pointerup',e=>{ if(drag.on && !drag.hand) dUp(e.clientX,e.clientY); });
+  function matchDrop(i){
+    const Q=round[qi]; if(answered) return;
+    const ok=Math.abs(Q.opts[i]-Q.ans)<1e-6;
+    document.querySelectorAll('.mopt').forEach((b,k)=>{
+      b.disabled=true;
+      if(Math.abs(Q.opts[k]-Q.ans)<1e-6) b.classList.add('ok');
+      else if(k===i) b.classList.add('no');
+    });
+    const tile=document.querySelectorAll('.mopt')[i];
+    tile.innerHTML=`<small>${esc(Q.q)}</small>${f2(Q.opts[i])} ${Q.unit}`;
+    document.getElementById('mTip').hidden=true; document.getElementById('mZone').hidden=true;
+    score(Q,ok);
+    document.getElementById('mNext').innerHTML=`<button class="btn" type="button" id="mNextBtn" data-hand-click>${qi===N-1?'Lihat keputusan':'Seterusnya'}</button>`;
+    const nb=document.getElementById('mNextBtn'); nb.onclick=next; nb.focus({preventScroll:true});
+  }
+  /* Antara muka untuk Kawalan Tangan */
+  window.Padanan={
+    active:()=>{ const Q=round[qi]; return !!(Q && Q.match); },
+    down:(x,y)=>{ drag.hand=true; if(dDown(x,y)) return;
+      const h=document.elementFromPoint(x,y); const b=h&&h.closest&&h.closest('[data-hand-click]'); if(b) b.click(); },
+    move:(x,y)=>dMove(x,y),
+    up:(x,y)=>{ dUp(x,y); drag.hand=false; }
+  };
   function finish(){
     const c=results.filter(Boolean).length;
     const s= c>=18?3 : c>=14?2 : c>=10?1 : 0;
@@ -521,6 +626,8 @@ form.ans .unit{position:absolute; right:14px; top:50%; transform:translateY(-50%
 
 <script type="module">
 /* ---------- Kawalan Tangan (MediaPipe Hand Landmarker) ---------- */
+/* Pautan GitHub Pages untuk Makmal (kamera dibenarkan di sana). Contoh: 'https://namaanda.github.io/pembaris/' */
+const MAKMAL_URL = 'https://franjieabdrahman.github.io/pembaris/';
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 const btn = document.getElementById('handBtn'), status = document.getElementById('handStatus');
@@ -529,11 +636,32 @@ const cv = document.getElementById('camCv'), g = cv.getContext('2d'), lbl = docu
 const mv = document.getElementById('mv');
 let landmarker = null, stream = null, running = false, lastT = -1;
 let grabbing = false, prev = null, smooth = null, theta = 0, phi = 38, radius = '62%';
+let wasGrab = false, lastC = null;
+const cursorEl = document.createElement('div'); cursorEl.id = 'handCursor'; cursorEl.hidden = true; document.body.appendChild(cursorEl);
+const P = () => window.Padanan;
+function toScreen(pt){
+  const panel = document.getElementById('quiz').closest('.panel').getBoundingClientRect();
+  const top = Math.max(panel.top, 0), bot = Math.min(panel.bottom, innerHeight);
+  const m = v => Math.max(0, Math.min(1, (v - 0.15) / 0.7));
+  return { x: panel.left + m(pt.x) * panel.width, y: top + m(pt.y) * (bot - top) };
+}
 const LINKS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 const say = t => { status.textContent = t; };
 const d2 = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
 
+function kameraDisekat(){
+  const fp = document.permissionsPolicy || document.featurePolicy;
+  try { return fp && fp.allowsFeature && !fp.allowsFeature('camera'); } catch(e){ return false; }
+}
+function tunjukPautan(mesej){
+  if(MAKMAL_URL){
+    status.innerHTML = mesej + ' <a href="' + MAKMAL_URL + '" target="_blank" rel="noopener">Buka Makmal Kawalan Tangan dalam tab baharu</a>.';
+  } else {
+    say(mesej + ' Guru perlu menghoskan fail ini di GitHub Pages untuk kawalan tangan.');
+  }
+}
 async function on(){
+  if(kameraDisekat()){ tunjukPautan('Halaman ini (Apps Script) tidak dibenarkan menggunakan kamera.'); return; }
   btn.disabled = true; say('Memuatkan pengesan tangan...');
   try{
     if(!landmarker){
@@ -552,9 +680,15 @@ async function on(){
     stream = await navigator.mediaDevices.getUserMedia({ video:{ width:640, height:480, facingMode:'user' }, audio:false });
   }catch(e){
     btn.disabled = false;
-    say(e && e.name === 'NotAllowedError'
-      ? 'Kamera tidak dibenarkan. Klik ikon kamera di bar alamat dan pilih Allow, kemudian cuba lagi.'
-      : 'Kamera tidak dapat dibuka di halaman ini. Pastikan kamera tidak digunakan aplikasi lain, atau buka melalui GitHub Pages.');
+    if(e && e.name === 'NotAllowedError' && !kameraDisekat()){
+      say('Kamera tidak dibenarkan. Klik ikon kamera (atau ikon tetapan) di hujung kanan bar alamat, pilih Allow, kemudian muat semula halaman.');
+    } else if(e && e.name === 'NotAllowedError'){
+      tunjukPautan('Halaman ini tidak dibenarkan menggunakan kamera.');
+    } else if(e && e.name === 'NotFoundError'){
+      say('Kamera tidak dijumpai pada peranti ini.');
+    } else {
+      say('Kamera sedang digunakan aplikasi lain (contoh Google Meet). Tutup aplikasi itu dan cuba lagi.');
+    }
     return;
   }
   video.srcObject = stream; await video.play();
@@ -565,7 +699,8 @@ async function on(){
   requestAnimationFrame(loop);
 }
 function off(){
-  running = false; grabbing = false; prev = null; smooth = null;
+  if(wasGrab && P() && lastC) P().up(lastC.x, lastC.y);
+  running = false; grabbing = false; wasGrab = false; prev = null; smooth = null; cursorEl.hidden = true;
   if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
   box.hidden = true; box.classList.remove('grab');
   btn.textContent = 'Hidupkan Kawalan Tangan';
@@ -589,7 +724,17 @@ function loop(){
       // titik kawalan: tengah ibu jari & telunjuk, dicerminkan supaya kanan = kanan
       const p = { x: 1 - (hand[4].x + hand[8].x)/2, y: (hand[4].y + hand[8].y)/2 };
       smooth = smooth ? { x: smooth.x*0.6 + p.x*0.4, y: smooth.y*0.6 + p.y*0.4 } : p;
-      if(grabbing){
+      const match = P() && P().active();
+      cursorEl.hidden = !match;
+      if(match){
+        const c = toScreen(smooth); lastC = c;
+        cursorEl.style.transform = 'translate(' + (c.x-15) + 'px,' + (c.y-15) + 'px)';
+        cursorEl.classList.toggle('grab', grabbing);
+        if(grabbing && !wasGrab) P().down(c.x, c.y);
+        else if(grabbing) P().move(c.x, c.y);
+        else if(wasGrab) P().up(c.x, c.y);
+        prev = null;
+      } else if(grabbing){
         if(prev){
           theta -= (smooth.x - prev.x) * 320;
           phi = Math.max(15, Math.min(85, phi - (smooth.y - prev.y) * 200));
@@ -597,10 +742,14 @@ function loop(){
         }
         prev = smooth;
       }
+      wasGrab = grabbing;
       box.classList.toggle('grab', grabbing);
-      lbl.textContent = grabbing ? 'Dipegang: gerakkan tangan' : 'Cubit untuk pegang';
+      lbl.textContent = match ? (grabbing ? 'Tarik ke jawapan' : 'Mod padanan: cubit kad')
+                              : (grabbing ? 'Dipegang: gerakkan tangan' : 'Cubit untuk pegang');
     } else {
-      grabbing = false; prev = null; smooth = null; box.classList.remove('grab');
+      if(wasGrab && P() && P().active() && lastC) P().up(lastC.x, lastC.y);
+      grabbing = false; wasGrab = false; prev = null; smooth = null; box.classList.remove('grab');
+      cursorEl.hidden = true;
       lbl.textContent = 'Tunjuk tangan';
     }
   }
